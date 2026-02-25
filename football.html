@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>La Mastilla LB</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #111;
+      color: white;
+      margin: 0;
+    }
+
+    h1 {
+      text-align: center;
+      color: #00ffcc;
+      padding: 20px 0;
+    }
+
+    .main-container {
+      display: flex;
+      justify-content: space-between;
+      padding: 20px;
+    }
+
+    /* LEFT SIDE */
+    #players {
+      width: 60%;
+    }
+
+    .player-box {
+      margin-bottom: 15px;
+      padding: 15px;
+      background: #1c1c1c;
+      border-radius: 10px;
+    }
+
+    /* RIGHT SIDE - LEAGUE TABLE */
+    .mini-board {
+      width: 35%;
+      background: #1a1a1a;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    .mini-board h3 {
+      text-align: center;
+      margin-bottom: 15px;
+      color: #00ffcc;
+    }
+
+    .table-header,
+    .mini-player {
+      display: grid;
+      grid-template-columns: 1.5fr 0.5fr 0.5fr 0.5fr 0.7fr;
+      padding: 8px 0;
+      border-bottom: 1px solid #333;
+      font-size: 14px;
+    }
+
+    .table-header {
+      font-weight: bold;
+      border-bottom: 2px solid #00ffcc;
+    }
+
+    .first-place {
+      background: rgba(0, 255, 0, 0.1);
+    }
+
+    .last-place {
+      background: rgba(255, 0, 0, 0.1);
+    }
+
+    button {
+      padding: 6px 10px;
+      margin: 5px 3px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.8;
+    }
+
+    .reset-container {
+      text-align: center;
+      margin: 20px;
+    }
+
+@media (max-width: 768px) {
+
+  .main-container {
+    flex-direction: column;
+  }
+
+  #players {
+    width: 100%;
+  }
+
+  .mini-board {
+    width: 100%;
+    margin-top: 20px;
+  }
+
+  .player-box {
+    font-size: 14px;
+  }
+
+  button {
+    width: 100%;
+    margin: 5px 0;
+  }
+
+}
+  </style>
+</head>
+<body>
+
+<h1>⚽ La Mastilla </h1>
+
+<div class="main-container">
+
+  <div id="players"></div>
+
+  <div class="mini-board">
+    <h3>🏆 League Table</h3>
+    <div class="table-header">
+      <div>Player</div>
+      <div>MP</div>
+      <div>W</div>
+      <div>L</div>
+      <div>PTS</div>
+    </div>
+    <div id="miniList"></div>
+  </div>
+
+</div>
+
+<div class="reset-container">
+  <button onclick="resetMonthly()">Reset Monthly Leaderboard</button>
+</div>
+
+<script>
+let players = JSON.parse(localStorage.getItem("players")) || [
+  {name:"Shubhankar", goals:0, assists:0, matches:0, wins:0, draws:0, losses:0},
+  {name:"Faisal", goals:0, assists:0, matches:0, wins:0, draws:0, losses:0},
+  {name:"Rimpu", goals:0, assists:0, matches:0, wins:0, draws:0, losses:0},
+  {name:"Abdullah", goals:0, assists:0, matches:0, wins:0, draws:0, losses:0},
+  {name:"Anvit", goals:0, assists:0, matches:0, wins:0, draws:0, losses:0},
+  {name:"Anushka", goals:0, assists:0, matches:0, wins:0, draws:0, losses:0},
+  {name:"Dimpu", goals:0, assists:0, matches:0, wins:0, draws:0, losses:0}
+];
+
+function saveData() {
+  localStorage.setItem("players", JSON.stringify(players));
+}
+
+function calculatePoints(player){
+  return (player.wins * 2) + player.draws;
+}
+
+function render() {
+  let container = document.getElementById("players");
+  container.innerHTML = "";
+
+  players.forEach((player) => {
+    container.innerHTML += `
+      <div class="player-box">
+        <h3>${player.name}</h3>
+        Goals: ${player.goals} |
+        Assists: ${player.assists}
+        <br><br>
+        <button onclick="addStat('${player.name}','goals')">+ Goal</button>
+        <button onclick="addStat('${player.name}','assists')">+ Assist</button>
+        <button onclick="addWin('${player.name}')">+ Win</button>
+        <button onclick="addDraw('${player.name}')">+ Draw</button>
+        <button onclick="addLoss('${player.name}')">+ Loss</button>
+      </div>
+    `;
+  });
+
+  updateMiniLeaderboard();
+}
+
+function updateMiniLeaderboard() {
+  let sorted = [...players].sort((a, b) => calculatePoints(b) - calculatePoints(a));
+
+  let miniList = document.getElementById("miniList");
+  miniList.innerHTML = "";
+
+  sorted.forEach((player, index) => {
+    let div = document.createElement("div");
+    div.className = "mini-player";
+
+    if (index === 0) div.classList.add("first-place");
+    if (index === sorted.length - 1) div.classList.add("last-place");
+
+    div.innerHTML = `
+      <div>${player.name}</div>
+      <div>${player.matches}</div>
+      <div>${player.wins}</div>
+      <div>${player.losses}</div>
+      <div>${calculatePoints(player)}</div>
+    `;
+
+    miniList.appendChild(div);
+  });
+}
+
+function findPlayer(name){
+  return players.find(p => p.name === name);
+}
+
+function addStat(name,type){
+  let player = findPlayer(name);
+  player[type]++;
+  saveData();
+  render();
+}
+
+function addWin(name){
+  let player = findPlayer(name);
+  player.wins++;
+  player.matches++;
+  saveData();
+  render();
+}
+
+function addDraw(name){
+  let player = findPlayer(name);
+  player.draws++;
+  player.matches++;
+  saveData();
+  render();
+}
+
+function addLoss(name){
+  let player = findPlayer(name);
+  player.losses++;
+  player.matches++;
+  saveData();
+  render();
+}
+
+function resetMonthly(){
+  if(confirm("Reset Monthly Leaderboard?")){
+    players.forEach(p=>{
+      p.goals=0;
+      p.assists=0;
+      p.matches=0;
+      p.wins=0;
+      p.draws=0;
+      p.losses=0;
+    });
+    saveData();
+    render();
+  }
+}
+
+render();
+</script>
+
+</body>
+</html>
